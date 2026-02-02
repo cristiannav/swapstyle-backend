@@ -1,0 +1,213 @@
+syntax = "proto3";
+
+package swapstyle.reputation;
+
+option go_package = "github.com/swapstyle/reputation/proto";
+
+// ============== REPUTATION SERVICE ==============
+// Service for blockchain-based reputation management
+
+service ReputationService {
+  // Get user's reputation score and history
+  rpc GetReputation(GetReputationRequest) returns (ReputationResponse);
+
+  // Record a completed swap transaction
+  rpc RecordSwap(RecordSwapRequest) returns (RecordSwapResponse);
+
+  // Submit a review for a user after swap
+  rpc SubmitReview(SubmitReviewRequest) returns (SubmitReviewResponse);
+
+  // Verify wallet ownership
+  rpc VerifyWallet(VerifyWalletRequest) returns (VerifyWalletResponse);
+
+  // Link wallet to user account
+  rpc LinkWallet(LinkWalletRequest) returns (LinkWalletResponse);
+
+  // Get reputation leaderboard
+  rpc GetLeaderboard(LeaderboardRequest) returns (LeaderboardResponse);
+
+  // Dispute a review
+  rpc DisputeReview(DisputeRequest) returns (DisputeResponse);
+}
+
+// ============== MESSAGES ==============
+
+message GetReputationRequest {
+  string user_id = 1;
+  bool include_history = 2;
+  int32 history_limit = 3;
+}
+
+message ReputationResponse {
+  string user_id = 1;
+  float overall_score = 2;
+  int32 total_swaps = 3;
+  int32 successful_swaps = 4;
+  float response_rate = 5;
+  float average_rating = 6;
+  int32 review_count = 7;
+  ReputationTier tier = 8;
+  repeated ReputationEvent history = 9;
+  BlockchainVerification blockchain_data = 10;
+}
+
+enum ReputationTier {
+  TIER_UNKNOWN = 0;
+  TIER_NEW = 1;
+  TIER_BRONZE = 2;
+  TIER_SILVER = 3;
+  TIER_GOLD = 4;
+  TIER_PLATINUM = 5;
+  TIER_DIAMOND = 6;
+}
+
+message ReputationEvent {
+  string event_id = 1;
+  EventType type = 2;
+  float score_change = 3;
+  int64 timestamp = 4;
+  string description = 5;
+  string related_user_id = 6;
+  string transaction_hash = 7;
+}
+
+enum EventType {
+  EVENT_UNKNOWN = 0;
+  EVENT_SWAP_COMPLETED = 1;
+  EVENT_REVIEW_RECEIVED = 2;
+  EVENT_REVIEW_GIVEN = 3;
+  EVENT_DISPUTE_WON = 4;
+  EVENT_DISPUTE_LOST = 5;
+  EVENT_VERIFICATION_COMPLETED = 6;
+  EVENT_TIER_UPGRADE = 7;
+}
+
+message BlockchainVerification {
+  bool is_verified = 1;
+  string wallet_address = 2;
+  int64 verified_at = 3;
+  string chain_id = 4;
+  int32 on_chain_swaps = 5;
+  string contract_address = 6;
+}
+
+message RecordSwapRequest {
+  string match_id = 1;
+  string user1_id = 2;
+  string user2_id = 3;
+  string garment1_id = 4;
+  string garment2_id = 5;
+  SwapMetadata metadata = 6;
+}
+
+message SwapMetadata {
+  float estimated_value1 = 1;
+  float estimated_value2 = 2;
+  string location = 3;
+  bool was_in_person = 4;
+  int64 completed_at = 5;
+}
+
+message RecordSwapResponse {
+  string swap_id = 1;
+  string transaction_hash = 2;
+  bool recorded_on_chain = 3;
+  float user1_new_score = 4;
+  float user2_new_score = 5;
+}
+
+message SubmitReviewRequest {
+  string reviewer_id = 1;
+  string reviewed_id = 2;
+  string swap_id = 3;
+  int32 rating = 4;  // 1-5
+  string comment = 5;
+  repeated ReviewTag tags = 6;
+}
+
+enum ReviewTag {
+  TAG_UNKNOWN = 0;
+  TAG_ACCURATE_DESCRIPTION = 1;
+  TAG_GREAT_COMMUNICATION = 2;
+  TAG_FAST_RESPONSE = 3;
+  TAG_PUNCTUAL = 4;
+  TAG_ITEM_AS_DESCRIBED = 5;
+  TAG_FRIENDLY = 6;
+  TAG_WOULD_SWAP_AGAIN = 7;
+}
+
+message SubmitReviewResponse {
+  string review_id = 1;
+  bool success = 2;
+  float reviewer_score_change = 3;
+  float reviewed_new_score = 4;
+  string transaction_hash = 5;
+}
+
+message VerifyWalletRequest {
+  string user_id = 1;
+  string wallet_address = 2;
+  string signed_message = 3;
+  string message_to_sign = 4;
+}
+
+message VerifyWalletResponse {
+  bool verified = 1;
+  string error_message = 2;
+}
+
+message LinkWalletRequest {
+  string user_id = 1;
+  string wallet_address = 2;
+  string signature = 3;
+  string chain_id = 4;
+}
+
+message LinkWalletResponse {
+  bool success = 1;
+  string error_message = 2;
+  string verification_token = 3;
+}
+
+message LeaderboardRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+  LeaderboardType type = 3;
+  string time_period = 4;  // all_time, monthly, weekly
+}
+
+enum LeaderboardType {
+  LEADERBOARD_OVERALL = 0;
+  LEADERBOARD_SWAPS = 1;
+  LEADERBOARD_RATING = 2;
+  LEADERBOARD_TIER = 3;
+}
+
+message LeaderboardResponse {
+  repeated LeaderboardEntry entries = 1;
+  int32 total_users = 2;
+}
+
+message LeaderboardEntry {
+  int32 rank = 1;
+  string user_id = 2;
+  string username = 3;
+  float score = 4;
+  int32 swaps_count = 5;
+  ReputationTier tier = 6;
+  string avatar_url = 7;
+}
+
+message DisputeRequest {
+  string review_id = 1;
+  string disputer_id = 2;
+  string reason = 3;
+  repeated string evidence_urls = 4;
+}
+
+message DisputeResponse {
+  string dispute_id = 1;
+  bool accepted = 2;
+  string status = 3;
+  string message = 4;
+}

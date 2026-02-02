@@ -1,0 +1,9 @@
+export { authService } from './auth.service.js';
+export { userService } from './user.service.js';
+export { garmentService } from './garment.service.js';
+export { swipeService } from './swipe.service.js';
+export { superLikeService } from './superlike.service.js';
+export { matchService } from './match.service.js';
+export { chatService } from './chat.service.js';
+export { notificationService } from './notification.service.js';
+export { eventService } from './event.service.js';

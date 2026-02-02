@@ -1,0 +1,180 @@
+syntax = "proto3";
+
+package swapstyle.vision;
+
+option go_package = "github.com/swapstyle/vision/proto";
+
+// ============== VISION SERVICE ==============
+// Service for computer vision analysis of garments
+
+service VisionService {
+  // Analyze a single garment image
+  rpc AnalyzeGarment(AnalyzeGarmentRequest) returns (AnalyzeGarmentResponse);
+
+  // Batch analyze multiple images
+  rpc BatchAnalyze(BatchAnalyzeRequest) returns (BatchAnalyzeResponse);
+
+  // Extract style features for ML matching
+  rpc ExtractStyleFeatures(ExtractFeaturesRequest) returns (ExtractFeaturesResponse);
+
+  // Verify garment authenticity (brand detection)
+  rpc VerifyAuthenticity(AuthenticityRequest) returns (AuthenticityResponse);
+
+  // Detect garment condition from images
+  rpc DetectCondition(ConditionRequest) returns (ConditionResponse);
+}
+
+// ============== MESSAGES ==============
+
+message AnalyzeGarmentRequest {
+  string image_url = 1;
+  bytes image_data = 2;  // Alternative: raw image bytes
+  AnalysisOptions options = 3;
+}
+
+message AnalysisOptions {
+  bool detect_category = 1;
+  bool detect_color = 2;
+  bool detect_brand = 3;
+  bool detect_pattern = 4;
+  bool detect_material = 5;
+  bool extract_features = 6;
+  bool estimate_condition = 7;
+}
+
+message AnalyzeGarmentResponse {
+  string request_id = 1;
+  CategoryDetection category = 2;
+  ColorDetection colors = 3;
+  BrandDetection brand = 4;
+  PatternDetection pattern = 5;
+  MaterialDetection material = 6;
+  repeated float style_vector = 7;
+  ConditionEstimate condition = 8;
+  float confidence = 9;
+  repeated string tags = 10;
+}
+
+message CategoryDetection {
+  string primary_category = 1;
+  string subcategory = 2;
+  float confidence = 3;
+  repeated CategoryScore alternatives = 4;
+}
+
+message CategoryScore {
+  string category = 1;
+  float score = 2;
+}
+
+message ColorDetection {
+  string primary_color = 1;
+  repeated string secondary_colors = 2;
+  string hex_code = 3;
+  float confidence = 4;
+  repeated ColorInfo color_palette = 5;
+}
+
+message ColorInfo {
+  string name = 1;
+  string hex = 2;
+  float percentage = 3;
+}
+
+message BrandDetection {
+  string detected_brand = 1;
+  float confidence = 2;
+  bool logo_detected = 3;
+  BoundingBox logo_location = 4;
+  repeated BrandScore alternatives = 5;
+}
+
+message BrandScore {
+  string brand = 1;
+  float score = 2;
+}
+
+message BoundingBox {
+  float x = 1;
+  float y = 2;
+  float width = 3;
+  float height = 4;
+}
+
+message PatternDetection {
+  string pattern_type = 1;  // solid, striped, plaid, floral, etc.
+  float confidence = 2;
+  repeated string pattern_details = 3;
+}
+
+message MaterialDetection {
+  string primary_material = 1;
+  repeated string secondary_materials = 2;
+  float confidence = 3;
+}
+
+message ConditionEstimate {
+  string condition = 1;  // NEW_WITH_TAGS, LIKE_NEW, GOOD, FAIR, WORN
+  float confidence = 2;
+  repeated DefectInfo defects = 3;
+}
+
+message DefectInfo {
+  string type = 1;  // stain, tear, fading, pilling, etc.
+  string severity = 2;  // minor, moderate, major
+  BoundingBox location = 3;
+}
+
+message BatchAnalyzeRequest {
+  repeated AnalyzeGarmentRequest images = 1;
+  AnalysisOptions options = 2;
+}
+
+message BatchAnalyzeResponse {
+  repeated AnalyzeGarmentResponse results = 1;
+  int32 processed_count = 2;
+  int32 failed_count = 3;
+  repeated string failed_ids = 4;
+}
+
+message ExtractFeaturesRequest {
+  string image_url = 1;
+  bytes image_data = 2;
+  string model_version = 3;
+}
+
+message ExtractFeaturesResponse {
+  repeated float feature_vector = 1;
+  int32 vector_dimension = 2;
+  string model_version = 3;
+}
+
+message AuthenticityRequest {
+  string garment_id = 1;
+  repeated string image_urls = 2;
+  string claimed_brand = 3;
+}
+
+message AuthenticityResponse {
+  bool is_authentic = 1;
+  float confidence = 2;
+  repeated AuthenticityFlag flags = 3;
+  string verification_id = 4;
+}
+
+message AuthenticityFlag {
+  string flag_type = 1;
+  string description = 2;
+  float severity = 3;
+}
+
+message ConditionRequest {
+  repeated string image_urls = 1;
+}
+
+message ConditionResponse {
+  string overall_condition = 1;
+  float confidence = 2;
+  repeated DefectInfo detected_defects = 3;
+  string detailed_report = 4;
+}
